@@ -1,33 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Canvas Save/Load/Download</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Poket Pixel</title>
 <style>
-  button {
-    margin: 10px;
-    padding: 15px 25px;
-    font-size: 18px;
+  :root { --gap: 12px; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: var(--gap);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: #f6f7f9; color: #111;
   }
+  h1 { font-size: 1.2rem; margin: 0 0 var(--gap) 0; }
+  textarea {
+    width: 100%; min-height: 180px; padding: 12px;
+    border: 1px solid #ccc; border-radius: 12px; background: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+  }
+  .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap); margin-top: var(--gap); }
+  button {
+    padding: 12px; border-radius: 12px; border: 1px solid #ddd; background: white; font-size: 16px; width: 100%;
+  }
+  .preview {
+    margin-top: var(--gap); padding: var(--gap); background: #fff; border: 1px solid #eee; border-radius: 12px;
+  }
+  img { max-width: 100%; height: auto; display: block; border-radius: 8px; }
+  .note { font-size: 0.92rem; color: #555; margin-top: 6px; }
 </style>
 </head>
 <body>
-  <button id="downloadBtn">Download</button>
+  <h1>Paste Data Text → Preview → Download</h1>
+
+  <textarea id="data" placeholder="Paste the text you copied from the Draw page (it should start with something like: data:image/png;base64,…)"></textarea>
+
+  <div class="actions">
+    <button id="previewBtn">Preview</button>
+    <button id="downloadBtn">Download PNG</button>
+  </div>
+
+  <div class="preview" id="previewBox" style="display:none;">
+    <img id="imgPrev" alt="Preview"/>
+    <div class="note" id="info"></div>
+  </div>
 
 <script>
-document.getElementById("downloadBtn").addEventListener("click", () => {
-  const savedData = localStorage.getItem("myCanvasData");
-  if (savedData) {
-    const a = document.createElement("a");
-    a.href = savedData;
-    a.download = "saved_canvas.png";
-    a.click();
-  } else {
-    alert("No saved canvas found to download.");
-  }
-});
-</script>
+(function(){
+  const textarea = document.getElementById('data');
+  const previewBtn = document.getElementById('previewBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const previewBox = document.getElementById('previewBox');
+  const imgPrev = document.getElementById('imgPrev');
+  const info = document.getElementById('info');
 
+  function validDataUrl(s){
+    return /^data:image\/(png|jpeg|webp);base64,/.test(s);
+  }
+
+  function showPreview(){
+    const raw = textarea.value.trim();
+    if (!validDataUrl(raw)) {
+      alert('Invalid data. Make sure you pasted the text from the Draw page (should start with data:image/png;base64,...)');
+      return;
+    }
+    imgPrev.onload = function() {
+      previewBox.style.display = 'block';
+      info.textContent = `Preview: ${imgPrev.naturalWidth}×${imgPrev.naturalHeight}`;
+    };
+    imgPrev.onerror = function() {
+      alert('Could not load the pasted data. It may be corrupted.');
+    };
+    imgPrev.src = raw;
+  }
+
+  function downloadImage(){
+    const raw = textarea.value.trim();
+    if (!validDataUrl(raw)) {
+      alert('Paste a valid image data URL first.');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = raw;
+    a.download = 'canvas.png';
+    a.click();
+  }
+
+  previewBtn.addEventListener('click', showPreview);
+  downloadBtn.addEventListener('click', downloadImage);
+})();
+</script>
 </body>
 </html>
